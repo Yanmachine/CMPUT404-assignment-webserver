@@ -26,8 +26,10 @@ class TestYourWebserver(unittest.TestCase):
         self.baseurl = baseurl
 
     def test_css(self):
-        url = self.baseurl + "/base.css"
-        req = request.urlopen(url, None, 3)
+        url = self.baseurl + "/base.css" #---> represents the IP address and port number for a local server 
+        #url = self.baseurl + "/deep.css"
+        req = request.urlopen(url, None, 3) #---> Sending url to server, no data, and timeout after 3 seconds
+        #sends a http request to the specifc url, used to open and read data from that url
         self.assertTrue( req.getcode()  == 200 , "200 OK Not FOUND!")
         self.assertTrue( req.info().get_content_type() == "text/css", ("Bad mimetype for css! %s" % req.info().get_content_type()))
 

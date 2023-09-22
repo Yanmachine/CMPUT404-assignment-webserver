@@ -36,45 +36,93 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print ("Got a request of: %s\n" % self.data)
 
         print(f"DATA --> {self.data}\n\n\n")
-        requestInput = self.data.decode(FORMAT).split('\n')
-        print(f"REQUEST INPUT --> {requestInput}\n\n\n")
-        requestLine = requestInput[0].split()
-        print(f"REQUEST LINE --> {requestLine}\n\n\n")
-        method = requestLine[0]
-        path = requestLine[1]
+        request_input = self.data.decode(FORMAT).split('\n')
+        print(f"REQUEST INPUT --> {request_input}\n\n\n")
+        request_line = request_input[0].split()
+        print(f"REQUEST LINE --> {request_line}\n\n\n")
+        method = request_line[0]
+        path = request_line[1]
         print(f"METHOD --> {method}\n\n\n")
         print(f"PATH --> {path}\n\n\n")
+
+
+
 
 
         if method == "GET":
             #maybe make more general get request method in the future?
             if path == "/base.css":
-                self.serveCSS()
+                self.serve_css("./www/base.css")
+            elif path == "/deep.css":
+                self.serve_css("./www/deep/deep.css")
+            elif path == "/index.html":
+                self.serve_html("./www/index.html")
             else:
-                print("PATH != /base.css")
-                
+                self.send_404_response()
+
+        elif method == "PUT":
+            self.send_404_response()
+
         else:
-            print("METHOD != GET")
+            self.send_405_response()
             
 
 
         #parse_lines = self.data.decode
-        self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n\r\nOK", FORMAT))
 
-    def serveCSS(self):
+    def send_404_response(self):
+        response_header = "HTTP/1.1 404 Not Found\r\n\r\n"
+        message = "Not Found"
+
+        self.request.sendall(response_header.encode(FORMAT) + message.encode(FORMAT))
+
+    def send_405_response(self):
+        response_header = "HTTP/1.1 405 Method Not Allowed\r\n\r\n"
+        message = "Method Not Allowed"
+
+        self.request.sendall(response_header.encode(FORMAT) + message.encode(FORMAT))
+
+    """
+    def send_200_response(self, content_type, content):
+        response_header = "HTTP/1.1 200 OK\r\n" + content_type
+
+        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT))
+    """
+
+    def serve_css(self, css_path):
         print("Serve css function")
 
-        responseHeader = "HTTP/1.1 200 OK\r\n"
+        response_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/css\r\n"
+        #response_header_1 = "HTTP/1.1 200 OK\r\n"
+        #content_type = "Content-Type: text/css\r\n"
 
         content = ""
         try:
-            with open("./www/base.css", "r") as cssFile:
-                content = cssFile.read()
+            with open(css_path, "r") as css_file:
+                content = css_file.read()
+                print(content)
         except FileNotFoundError:
-            responseHeader = "HTTP/1.1 404 Not Found\r\n"
-            content = "EMPTY"
+            self.send_404_response()
 
-        self.request.sendall(responseHeader.encode(FORMAT) + content.encode(FORMAT))
+        #self.send_200_response()
+
+        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT)) #--> option 1 preferable
+        #self.request.sendall(response_header_1.encode(FORMAT) + response_header_2.encode(FORMAT)) this and next line option 2
+        #self.request.sendall(content.encode(FORMAT)) --> could include this in the previous line
+
+    def serve_html(self, html_path):
+        print("Serve html function")
+        response_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/html\r\n"
+
+        content = ""
+        try:
+            with open(html_path, "r") as html_file:
+                content = html_file.read()
+                print(content)
+        except FileNotFoundError:
+            self.send_404_response()
+
+        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT))
 
 
 if __name__ == "__main__":

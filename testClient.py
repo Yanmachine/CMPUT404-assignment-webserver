@@ -6,7 +6,7 @@ PORT = 8080
 HOST = "localhost"
 
 def get(host, port, path):
-    request = b"GET " + path.encode(FORMAT) + b" HTTP/1.1\r\nHost: " + host.encode(FORMAT) + b"\r\n\r\n"
+    request = b"POST " + path.encode(FORMAT) + b" HTTP/1.1\r\nHost: " + host.encode(FORMAT) + b"\r\n\r\n"
     #could also use f string --> f"GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n".encode(FORMAT)
     # Creates a client socket using IPv4 and TCP
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
