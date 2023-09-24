@@ -27,7 +27,7 @@ class TestYourWebserver(unittest.TestCase):
 
     def test_css(self):
         url = self.baseurl + "/base.css" #---> represents the IP address and port number for a local server 
-        #url = self.baseurl + "/deep.css"
+        #url = self.baseurl + "/deep.css" #self added
         req = request.urlopen(url, None, 3) #---> Sending url to server, no data, and timeout after 3 seconds
         #sends a http request to the specifc url, used to open and read data from that url
         self.assertTrue( req.getcode()  == 200 , "200 OK Not FOUND!")
@@ -37,11 +37,15 @@ class TestYourWebserver(unittest.TestCase):
         url = self.baseurl + "/"
         req = request.urlopen(url, None, 3)
         self.assertTrue( req.getcode()  == 200 , "200 OK Not FOUND!")
+        self.assertTrue( req.info().get_content_type() == "text/html", ("Bad mimetype for css! %s" % req.info().get_content_type())) #self added
+
 
     def test_get_indexhtml(self):
         url = self.baseurl + "/index.html"
         req = request.urlopen(url, None, 3)
         self.assertTrue( req.getcode()  == 200 , "200 OK Not FOUND!")
+        self.assertTrue( req.info().get_content_type() == "text/html", ("Bad mimetype for css! %s" % req.info().get_content_type())) # self added
+
 
 
     def test_get_404(self):

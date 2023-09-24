@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -33,35 +34,39 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
+        #print ("Got a request of: %s\n" % self.data)
 
-        print(f"DATA --> {self.data}\n\n\n")
+        #print(f"DATA --> {self.data}\n\n\n")
         request_input = self.data.decode(FORMAT).split('\n')
-        print(f"REQUEST INPUT --> {request_input}\n\n\n")
+        #print(f"REQUEST INPUT --> {request_input}\n\n\n")
         request_line = request_input[0].split()
-        print(f"REQUEST LINE --> {request_line}\n\n\n")
+        #print(f"REQUEST LINE --> {request_line}\n\n\n")
         method = request_line[0]
         path = request_line[1]
-        print(f"METHOD --> {method}\n\n\n")
+        #print(f"METHOD --> {method}\n\n\n")
         print(f"PATH --> {path}\n\n\n")
 
+        
 
-
-
+        #need to respond to redirects
 
         if method == "GET":
             #maybe make more general get request method in the future?
             if path == "/base.css":
                 self.serve_css("./www/base.css")
-            elif path == "/deep.css":
+            elif path == "/deep.css": 
                 self.serve_css("./www/deep/deep.css")
-            elif path == "/index.html":
+            elif path == "/index.html" or path == "/" or path == "/www/":
                 self.serve_html("./www/index.html")
+            elif path == "/deep/":
+                self.serve_html("./www/deep/index.html")
+            elif path == "/deep":
+                self.send_301_redirect("/deep/")
+            elif path == "/www":
+                self.send_301_redirect("/www/")
+
             else:
                 self.send_404_response()
-
-        elif method == "PUT":
-            self.send_404_response()
 
         else:
             self.send_405_response()
@@ -69,6 +74,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
 
         #parse_lines = self.data.decode
+
+    def send_301_redirect(self, path):
+        response_header = "HTTP/1.1 301 Moved Permanently\r\n" 
+        response_header += "Location: " + path + "\r\n\r\n"
+        
+        self.request.sendall(response_header.encode(FORMAT))
 
     def send_404_response(self):
         response_header = "HTTP/1.1 404 Not Found\r\n\r\n"
