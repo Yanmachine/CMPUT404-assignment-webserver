@@ -2,7 +2,7 @@
 import socketserver
 import os
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2013 Abram Hindle, Eddie Antonio Santos, Ian Harding
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,12 +29,11 @@ import os
 
 FORMAT = 'utf-8'
 
-
 class MyWebServer(socketserver.BaseRequestHandler):
-    
+    ROOT = "./www"
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        #print ("Got a request of: %s\n" % self.data)
 
         #print(f"DATA --> {self.data}\n\n\n")
         request_input = self.data.decode(FORMAT).split('\n')
@@ -45,41 +44,68 @@ class MyWebServer(socketserver.BaseRequestHandler):
         path = request_line[1]
         #print(f"METHOD --> {method}\n\n\n")
         print(f"PATH --> {path}\n\n\n")
-
         
 
-        #need to respond to redirects
-
         if method == "GET":
-            #maybe make more general get request method in the future?
-            if path == "/base.css":
-                self.serve_css("./www/base.css")
-            elif path == "/deep.css": 
-                self.serve_css("./www/deep/deep.css")
-            elif path == "/index.html" or path == "/" or path == "/www/":
+
+            #if not os.path.exists("./www" + path):
+            #    self.send_404_response()
+
+            absolute_path = os.path.abspath(os.path.join(self.ROOT, path.strip("/"))) #finds the absolute path after joining root with requested path
+            if not absolute_path.startswith(os.path.abspath(self.ROOT)): #so if directory is after /www, request is ok, but if it is before, error
+                self.send_404_response()
+
+            end_of_path = os.path.basename(absolute_path)
+            print(f"ABSOLUTE PATH ========= {absolute_path}")
+            print(f" END OF PATH ========================== {end_of_path}")
+
+                #css request
+            if end_of_path.endswith(".css"):
+                self.serve_css(absolute_path)
+            
+            #html request
+            if end_of_path.endswith(".html"):
+                self.serve_html(absolute_path)
+
+            if path == "/" or path == "/www/":
                 self.serve_html("./www/index.html")
             elif path == "/deep/":
                 self.serve_html("./www/deep/index.html")
+
             elif path == "/deep":
                 self.send_301_redirect("/deep/")
-            elif path == "/www":
-                self.send_301_redirect("/www/")
-
             else:
                 self.send_404_response()
 
         else:
             self.send_405_response()
-            
 
+               
 
-        #parse_lines = self.data.decode
+    
+    def send_200_response(self, content_type, content):
+        response_header = "HTTP/1.1 200 OK\r\n"
+
+        if type != None:
+            response_header += content_type
+
+        if content != None:
+            self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT))
+        else:
+            self.request.sendall(response_header.encode(FORMAT))
+
 
     def send_301_redirect(self, path):
         response_header = "HTTP/1.1 301 Moved Permanently\r\n" 
         response_header += "Location: " + path + "\r\n\r\n"
         
         self.request.sendall(response_header.encode(FORMAT))
+    
+    def send_403_response(self):
+        response_header = "HTTP/1.1 403 Forbidden\r\n\r\n"
+        message = "Forbidden"
+
+        self.request.sendall(response_header.encode(FORMAT) + message.encode(FORMAT))
 
     def send_404_response(self):
         response_header = "HTTP/1.1 404 Not Found\r\n\r\n"
@@ -93,47 +119,37 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         self.request.sendall(response_header.encode(FORMAT) + message.encode(FORMAT))
 
-    """
-    def send_200_response(self, content_type, content):
-        response_header = "HTTP/1.1 200 OK\r\n" + content_type
+    def send_500_response(self):
+        response_header = "HTTP/1.1 500 Internal Server Error\r\n\r\n"
+        message = "Internal Server Error"
 
-        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT))
-    """
+        self.request.sendall(response_header.encode(FORMAT) + message.encode(FORMAT))
+
+
 
     def serve_css(self, css_path):
-        print("Serve css function")
-
-        response_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/css\r\n"
-        #response_header_1 = "HTTP/1.1 200 OK\r\n"
-        #content_type = "Content-Type: text/css\r\n"
-
         content = ""
+
         try:
             with open(css_path, "r") as css_file:
                 content = css_file.read()
-                print(content)
         except FileNotFoundError:
             self.send_404_response()
 
-        #self.send_200_response()
+        self.send_200_response("Content-Type: text/css\r\n", content)
 
-        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT)) #--> option 1 preferable
-        #self.request.sendall(response_header_1.encode(FORMAT) + response_header_2.encode(FORMAT)) this and next line option 2
-        #self.request.sendall(content.encode(FORMAT)) --> could include this in the previous line
+
 
     def serve_html(self, html_path):
-        print("Serve html function")
-        response_header = "HTTP/1.1 200 OK\r\n" + "Content-Type: text/html\r\n"
-
         content = ""
+
         try:
             with open(html_path, "r") as html_file:
                 content = html_file.read()
-                print(content)
         except FileNotFoundError:
             self.send_404_response()
 
-        self.request.sendall(response_header.encode(FORMAT) + content.encode(FORMAT))
+        self.send_200_response("Content-Type: text/html\r\n", content)
 
 
 if __name__ == "__main__":
