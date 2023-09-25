@@ -48,8 +48,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         if method == "GET":
 
-            #if not os.path.exists("./www" + path):
-            #    self.send_404_response()
+            if not os.path.exists("./www" + path):
+                self.send_404_response()
 
             absolute_path = os.path.abspath(os.path.join(self.ROOT, path.strip("/"))) #finds the absolute path after joining root with requested path
             #absolute path removes unnecesary /../v
@@ -58,7 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             end_of_path = os.path.basename(absolute_path)
             print(f"ABSOLUTE PATH ========= {absolute_path}")
-            print(f" END OF PATH ========================== {end_of_path}")
+            print(f" END OF PATH ========= {end_of_path}")
 
                 #css request
             if end_of_path.endswith(".css"):
@@ -68,16 +68,28 @@ class MyWebServer(socketserver.BaseRequestHandler):
             elif end_of_path.endswith(".html"): 
                 self.serve_html(absolute_path)
 
-            elif path == "/" or path == "/www/":
-                self.serve_html("./www/index.html")
-            elif path == "/deep/":
-                self.serve_html("./www/deep/index.html")
+            #if ends with a /, then serve .html
+            #if not ends with a /, then redirect
 
-            elif path == "/deep":
-                self.send_301_redirect("/deep/")
+            elif path.endswith("/"):
+                print("Endswith ---> ")
+                print(absolute_path + "index.html")
+                self.serve_html(absolute_path + "/index.html")
             else:
-                print("THIS SHOULD ONLY RUN ON ON 404 RESPONSE")
-                self.send_404_response()
+                print(end_of_path)
+                self.send_301_redirect("/" + end_of_path + "/")
+            
+
+        #     elif path == "/" or path == "/www/":
+        #         self.serve_html("./www/index.html")
+        #     elif path == "/deep/":
+        #         self.serve_html("./www/deep/index.html")
+
+        #     elif path == "/deep":
+        #         self.send_301_redirect("/deep/")
+        #   #  else:
+           #     print("THIS SHOULD ONLY RUN ON ON 404 RESPONSE")
+            #    self.send_404_response()
 
         else:
             self.send_405_response()
