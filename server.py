@@ -30,7 +30,7 @@ import os
 FORMAT = 'utf-8'
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    ROOT = "./www"
+    ROOT = "./www" #root of server
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
@@ -52,6 +52,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             #    self.send_404_response()
 
             absolute_path = os.path.abspath(os.path.join(self.ROOT, path.strip("/"))) #finds the absolute path after joining root with requested path
+            #absolute path removes unnecesary /../v
             if not absolute_path.startswith(os.path.abspath(self.ROOT)): #so if directory is after /www, request is ok, but if it is before, error
                 self.send_404_response()
 
@@ -64,10 +65,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.serve_css(absolute_path)
             
             #html request
-            if end_of_path.endswith(".html"):
+            elif end_of_path.endswith(".html"): 
                 self.serve_html(absolute_path)
 
-            if path == "/" or path == "/www/":
+            elif path == "/" or path == "/www/":
                 self.serve_html("./www/index.html")
             elif path == "/deep/":
                 self.serve_html("./www/deep/index.html")
@@ -75,6 +76,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             elif path == "/deep":
                 self.send_301_redirect("/deep/")
             else:
+                print("THIS SHOULD ONLY RUN ON ON 404 RESPONSE")
                 self.send_404_response()
 
         else:
