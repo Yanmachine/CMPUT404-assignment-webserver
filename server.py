@@ -80,17 +80,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.send_301_redirect("/" + end_of_path + "/")
             
 
-        #     elif path == "/" or path == "/www/":
-        #         self.serve_html("./www/index.html")
-        #     elif path == "/deep/":
-        #         self.serve_html("./www/deep/index.html")
-
-        #     elif path == "/deep":
-        #         self.send_301_redirect("/deep/")
-        #   #  else:
-           #     print("THIS SHOULD ONLY RUN ON ON 404 RESPONSE")
-            #    self.send_404_response()
-
         else:
             self.send_405_response()
 
