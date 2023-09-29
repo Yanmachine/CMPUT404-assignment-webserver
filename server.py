@@ -35,15 +35,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
 
-        #print(f"DATA --> {self.data}\n\n\n")
         request_input = self.data.decode(FORMAT).split('\n')
-        #print(f"REQUEST INPUT --> {request_input}\n\n\n")
         request_line = request_input[0].split()
-        #print(f"REQUEST LINE --> {request_line}\n\n\n")
         method = request_line[0]
         path = request_line[1]
-        #print(f"METHOD --> {method}\n\n\n")
-        print(f"PATH --> {path}\n\n\n")
         
 
         if method == "GET":
@@ -53,14 +48,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             absolute_path = os.path.abspath(os.path.join(self.ROOT, path.strip("/"))) #finds the absolute path after joining root with requested path
             #absolute path removes unnecesary /../v
-            if not absolute_path.startswith(os.path.abspath(self.ROOT)): #so if directory is after /www, request is ok, but if it is before, error
+            if not absolute_path.startswith(os.path.abspath(self.ROOT)): #if absolute path ends in parent directory, return 404
                 self.send_404_response()
 
             end_of_path = os.path.basename(absolute_path)
-            print(f"ABSOLUTE PATH ========= {absolute_path}")
-            print(f" END OF PATH ========= {end_of_path}")
 
-                #css request
+            #css request
             if end_of_path.endswith(".css"):
                 self.serve_css(absolute_path)
             
@@ -72,11 +65,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             #if not ends with a /, then redirect
 
             elif path.endswith("/"):
-                print("Endswith ---> ")
-                print(absolute_path + "index.html")
                 self.serve_html(absolute_path + "/index.html")
             else:
-                print(end_of_path)
                 self.send_301_redirect("/" + end_of_path + "/")
             
 
@@ -157,8 +147,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
-
-    print("--- Server Running ---")
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
